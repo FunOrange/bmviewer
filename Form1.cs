@@ -5,6 +5,10 @@ using System.Text;
 using System.Windows.Forms;
 using osu.Game.Beatmaps;
 using osu.Game.IO;
+using osu.Game.Rulesets.Objects;
+using System.Collections.Generic;
+using System.Linq;
+using osu.Game.Rulesets.Osu.Objects;
 
 namespace bmviewer
 {
@@ -14,15 +18,12 @@ namespace bmviewer
         public Form1()
         {
             InitializeComponent();
-            using (var stream = File.OpenRead(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Normal].osu"))
-            using (var streamReader = new LineBufferedReader(stream))
-                beatmap = osu.Game.Beatmaps.Formats.Decoder.GetDecoder<Beatmap>(streamReader).Decode(streamReader);
+            beatmap = LoadBeatmap(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Normal].osu");
             Console.WriteLine(beatmap);
         }
 
         private void openButton_Click(object sender, EventArgs e)
         {
-            var fileContent = string.Empty;
             var filePath = string.Empty;
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
@@ -34,26 +35,20 @@ namespace bmviewer
                 openFileDialog.Title = "Select beatmap";
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    //Get the path of specified file
                     filePath = openFileDialog.FileName;
-
-                    //Read the contents of the file into a stream
-                    var fileStream = openFileDialog.OpenFile();
-
-                    using (StreamReader reader = new StreamReader(fileStream))
-                    {
-                        fileContent = reader.ReadToEnd();
-                    }
-                }
             }
             if (filePath == "")
                 return;
 
-            using (var stream = File.OpenRead(filePath))
-            using (var streamReader = new LineBufferedReader(stream))
-                beatmap = osu.Game.Beatmaps.Formats.Decoder.GetDecoder<Beatmap>(streamReader).Decode(streamReader);
+            // Load beatmap
+            beatmap = LoadBeatmap(filePath);
+        }
 
+        private Beatmap LoadBeatmap(string beatmapPath)
+        {
+            using (var stream = File.OpenRead(beatmapPath))
+            using (var streamReader = new LineBufferedReader(stream))
+                return osu.Game.Beatmaps.Formats.Decoder.GetDecoder<Beatmap>(streamReader).Decode(streamReader);
         }
 
         private void renderButton_Click(object sender, EventArgs e)
@@ -75,6 +70,19 @@ namespace bmviewer
 
         private void DrawGame(SKCanvas canvas, int width, int height)
         {
+            if (beatmap == null)
+                return;
+
+            // draw the game
+            // todo: may need to make a beatmap wrapper class to access shit
+            var a = beatmap.HitObjects;
+            var b = a.Where(obj => obj is HitCircle);
+            foreach (var o in beatmap.HitObjects)
+            {
+                if (o is osu.Game.Rulesets.Objects.Legacy.Osu.ConvertHit)
+                    Console.WriteLine(o);
+            }
+
             // draw on the canvas
             var paint1 = new SKPaint
             {
