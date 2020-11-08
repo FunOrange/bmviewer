@@ -1,0 +1,3 @@
+[submodule "submodules/osuPiotrekol"]
+	path = submodules/osuPiotrekol
+	url = https://github.com/Piotrekol/osu
