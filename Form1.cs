@@ -9,11 +9,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using osu.Game.Beatmaps;
 
 namespace bmviewer
 {
     public partial class Form1 : Form
     {
+        Beatmap beatmap;
         public Form1()
         {
             InitializeComponent();
