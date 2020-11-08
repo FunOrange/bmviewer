@@ -1,15 +1,10 @@
 ﻿using SkiaSharp;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using osu.Game.Beatmaps;
+using osu.Game.IO;
 
 namespace bmviewer
 {
@@ -19,6 +14,10 @@ namespace bmviewer
         public Form1()
         {
             InitializeComponent();
+            using (var stream = File.OpenRead(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Normal].osu"))
+            using (var streamReader = new LineBufferedReader(stream))
+                beatmap = osu.Game.Beatmaps.Formats.Decoder.GetDecoder<Beatmap>(streamReader).Decode(streamReader);
+            Console.WriteLine(beatmap);
         }
 
         private void openButton_Click(object sender, EventArgs e)
@@ -48,6 +47,13 @@ namespace bmviewer
                     }
                 }
             }
+            if (filePath == "")
+                return;
+
+            using (var stream = File.OpenRead(filePath))
+            using (var streamReader = new LineBufferedReader(stream))
+                beatmap = osu.Game.Beatmaps.Formats.Decoder.GetDecoder<Beatmap>(streamReader).Decode(streamReader);
+
         }
 
         private void renderButton_Click(object sender, EventArgs e)
