@@ -1,4 +1,3 @@
-[submodule "submodules/osu"]
-	path = submodules/osu
+[submodule "submodules/osuFunOrange"]
+	path = submodules/osuFunOrange
 	url = git@github.com:FunOrange/osu.git
-	branch = partial-diffcalc

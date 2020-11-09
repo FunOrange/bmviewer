@@ -30,13 +30,13 @@
         {
             this.components = new System.ComponentModel.Container();
             this.openButton = new System.Windows.Forms.Button();
-            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
+            this.timeUpDown = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
-            this.renderButton = new System.Windows.Forms.Button();
-            this.bindingSource1 = new System.Windows.Forms.BindingSource(this.components);
             this.skControl = new SkiaSharp.Views.Desktop.SKControl();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
+            this.gameTimer = new System.Windows.Forms.Timer(this.components);
+            this.restartButton = new System.Windows.Forms.Button();
+            this.playPauseButton = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.timeUpDown)).BeginInit();
             this.SuspendLayout();
             // 
             // openButton
@@ -49,17 +49,23 @@
             this.openButton.UseVisualStyleBackColor = true;
             this.openButton.Click += new System.EventHandler(this.openButton_Click);
             // 
-            // numericUpDown1
+            // timeUpDown
             // 
-            this.numericUpDown1.Location = new System.Drawing.Point(12, 78);
-            this.numericUpDown1.Maximum = new decimal(new int[] {
-            100000,
+            this.timeUpDown.Increment = new decimal(new int[] {
+            10,
             0,
             0,
             0});
-            this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(86, 20);
-            this.numericUpDown1.TabIndex = 3;
+            this.timeUpDown.Location = new System.Drawing.Point(12, 78);
+            this.timeUpDown.Maximum = new decimal(new int[] {
+            100000000,
+            0,
+            0,
+            0});
+            this.timeUpDown.Name = "timeUpDown";
+            this.timeUpDown.Size = new System.Drawing.Size(86, 20);
+            this.timeUpDown.TabIndex = 3;
+            this.timeUpDown.ValueChanged += new System.EventHandler(this.timeUpDown_ValueChanged);
             // 
             // label1
             // 
@@ -70,41 +76,58 @@
             this.label1.TabIndex = 4;
             this.label1.Text = "time (ms)";
             // 
-            // renderButton
-            // 
-            this.renderButton.Location = new System.Drawing.Point(12, 104);
-            this.renderButton.Name = "renderButton";
-            this.renderButton.Size = new System.Drawing.Size(86, 23);
-            this.renderButton.TabIndex = 5;
-            this.renderButton.Text = "Render";
-            this.renderButton.UseVisualStyleBackColor = true;
-            this.renderButton.Click += new System.EventHandler(this.renderButton_Click);
-            // 
             // skControl
             // 
             this.skControl.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.skControl.Location = new System.Drawing.Point(104, 11);
+            this.skControl.BackColor = System.Drawing.Color.Black;
+            this.skControl.Location = new System.Drawing.Point(110, 12);
             this.skControl.Name = "skControl";
-            this.skControl.Size = new System.Drawing.Size(800, 600);
+            this.skControl.Size = new System.Drawing.Size(640, 480);
             this.skControl.TabIndex = 6;
             this.skControl.Text = "skControl";
             this.skControl.PaintSurface += new System.EventHandler<SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs>(this.skControl_PaintSurface);
+            // 
+            // gameTimer
+            // 
+            this.gameTimer.Enabled = true;
+            this.gameTimer.Interval = 17;
+            this.gameTimer.Tick += new System.EventHandler(this.gameTimer_Tick);
+            // 
+            // restartButton
+            // 
+            this.restartButton.Location = new System.Drawing.Point(12, 133);
+            this.restartButton.Name = "restartButton";
+            this.restartButton.Size = new System.Drawing.Size(86, 23);
+            this.restartButton.TabIndex = 7;
+            this.restartButton.Text = "Restart";
+            this.restartButton.UseVisualStyleBackColor = true;
+            this.restartButton.Click += new System.EventHandler(this.restartButton_Click);
+            // 
+            // playPauseButton
+            // 
+            this.playPauseButton.Location = new System.Drawing.Point(12, 104);
+            this.playPauseButton.Name = "playPauseButton";
+            this.playPauseButton.Size = new System.Drawing.Size(86, 23);
+            this.playPauseButton.TabIndex = 7;
+            this.playPauseButton.Text = "Play/Pause";
+            this.playPauseButton.UseVisualStyleBackColor = true;
+            this.playPauseButton.Click += new System.EventHandler(this.playPauseButton_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(916, 623);
+            this.ClientSize = new System.Drawing.Size(762, 505);
+            this.Controls.Add(this.playPauseButton);
+            this.Controls.Add(this.restartButton);
             this.Controls.Add(this.skControl);
-            this.Controls.Add(this.renderButton);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.numericUpDown1);
+            this.Controls.Add(this.timeUpDown);
             this.Controls.Add(this.openButton);
             this.Name = "Form1";
             this.ShowIcon = false;
             this.Text = "bmviewer";
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.timeUpDown)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -112,11 +135,12 @@
 
         #endregion
         private System.Windows.Forms.Button openButton;
-        private System.Windows.Forms.NumericUpDown numericUpDown1;
+        private System.Windows.Forms.NumericUpDown timeUpDown;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button renderButton;
-        private System.Windows.Forms.BindingSource bindingSource1;
         private SkiaSharp.Views.Desktop.SKControl skControl;
+        private System.Windows.Forms.Timer gameTimer;
+        private System.Windows.Forms.Button restartButton;
+        private System.Windows.Forms.Button playPauseButton;
     }
 }
 

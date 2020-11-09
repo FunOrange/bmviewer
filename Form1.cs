@@ -9,17 +9,29 @@ using osu.Game.Rulesets.Objects;
 using System.Collections.Generic;
 using System.Linq;
 using osu.Game.Rulesets.Osu.Objects;
+using osu.Game.Rulesets.Objects.Legacy.Osu;
+using System.Diagnostics;
+using osu.Game.Rulesets.Osu.Beatmaps;
 
 namespace bmviewer
 {
     public partial class Form1 : Form
     {
-        Beatmap beatmap;
+        OsuBeatmap beatmap;
+        int gameTime = 0;
+        Stopwatch stopwatch = new Stopwatch();
+
+        // Skin elements
+
         public Form1()
         {
             InitializeComponent();
-            beatmap = LoadBeatmap(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Normal].osu");
+            var convertBeatmap = ReadBeatmap(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Insane].osu");
+            beatmap = (OsuBeatmap)(new OsuBeatmapConverter(convertBeatmap).Convert());
+            Text = $"bmviewer - {beatmap}";
             Console.WriteLine(beatmap);
+            stopwatch.Start();
+            gameTimer.Start();
         }
 
         private void openButton_Click(object sender, EventArgs e)
@@ -28,7 +40,7 @@ namespace bmviewer
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.InitialDirectory = "c:\\";
+                openFileDialog.InitialDirectory = @"C:\Program Files\osu!\Songs";
                 openFileDialog.Filter = "beatmap (*.osu)|*.osu|All files (*.*)|*.*";
                 openFileDialog.FilterIndex = 1;
                 openFileDialog.RestoreDirectory = true;
@@ -41,14 +53,21 @@ namespace bmviewer
                 return;
 
             // Load beatmap
-            beatmap = LoadBeatmap(filePath);
+            //beatmap = LoadBeatmap(filePath);
+            //Text = $"bmviewer - {beatmap}";
+            //gameTime = 0;
         }
 
-        private Beatmap LoadBeatmap(string beatmapPath)
+        private Beatmap ReadBeatmap(string beatmapPath)
         {
             using (var stream = File.OpenRead(beatmapPath))
             using (var streamReader = new LineBufferedReader(stream))
                 return osu.Game.Beatmaps.Formats.Decoder.GetDecoder<Beatmap>(streamReader).Decode(streamReader);
+        }
+
+        private void LoadSkin()
+        {
+
         }
 
         private void renderButton_Click(object sender, EventArgs e)
@@ -64,34 +83,67 @@ namespace bmviewer
             var height = e.Info.Height;
             var canvas = surface.Canvas;
 
-            DrawGame(canvas, width, height);
+            Render(canvas, width, height);
             canvas.Flush();
         }
 
-        private void DrawGame(SKCanvas canvas, int width, int height)
+        private void Render(SKCanvas canvas, int width, int height)
         {
             if (beatmap == null)
                 return;
 
             // draw the game
-            // todo: may need to make a beatmap wrapper class to access shit
-            var a = beatmap.HitObjects;
-            var b = a.Where(obj => obj is HitCircle);
-            foreach (var o in beatmap.HitObjects)
-            {
-                if (o is osu.Game.Rulesets.Objects.Legacy.Osu.ConvertHit)
-                    Console.WriteLine(o);
-            }
-
-            // draw on the canvas
-            var paint1 = new SKPaint
-            {
-                IsAntialias = true,
-                Color = SKColors.Blue,
-                StrokeWidth = 15
-            };
             canvas.Clear(SKColors.Black);
-            canvas.DrawCircle(50, 50, 30, paint1);
+
+            // draw objects
+            foreach (OsuHitObject obj in beatmap.HitObjects.AsEnumerable().Reverse())
+            {
+                switch (obj)
+                {
+                    case HitCircle hitCircle:
+                        DrawFunctions.DrawHitCircle(canvas, gameTime, hitCircle);
+                        break;
+                    case Slider slider:
+                        DrawFunctions.DrawSlider(canvas, gameTime, slider);
+                        break;
+                }
+            }
+        }
+
+        private void gameTimer_Tick(object sender, EventArgs e)
+        {
+            SetGameTime(gameTime + (int)stopwatch.ElapsedMilliseconds);
+            stopwatch.Restart();
+        }
+
+        private void restartButton_Click(object sender, EventArgs e)
+        {
+            SetGameTime(0);
+        }
+
+        private void SetGameTime(int time)
+        {
+            gameTime = time;
+            timeUpDown.Value = gameTime;
+            skControl.Invalidate();
+        }
+
+        private void playPauseButton_Click(object sender, EventArgs e)
+        {
+            if (gameTimer.Enabled)
+                gameTimer.Stop();
+            else
+                gameTimer.Start();
+
+            if (stopwatch.IsRunning)
+                stopwatch.Stop();
+            else
+                stopwatch.Restart();
+        }
+
+        private void timeUpDown_ValueChanged(object sender, EventArgs e)
+        {
+            SetGameTime((int)timeUpDown.Value);
         }
     }
 }
