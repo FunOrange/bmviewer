@@ -26,7 +26,7 @@ namespace bmviewer
         public Form1()
         {
             InitializeComponent();
-            LoadSkin();
+            DrawFunctions.LoadSkin();
             beatmap = LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Insane].osu");
             stopwatch.Start();
             gameTimer.Start();
@@ -69,11 +69,6 @@ namespace bmviewer
             processor.PostProcess();
             Text = $"bmviewer - {convertBeatmap}";
             return osuBeatmap;
-        }
-
-        private void LoadSkin()
-        {
-
         }
 
         private void renderButton_Click(object sender, EventArgs e)

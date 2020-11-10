@@ -5,6 +5,7 @@ using osu.Game.Rulesets.Osu.Objects;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,14 @@ namespace bmviewer
     {
         // Visual parameters
         static float approachCircleMaxScale = 3.7f;
+        static SKBitmap HitCircleBitmap;
+        static SKBitmap HitCircleOverlayBitmap;
+
+        public static void LoadSkin()
+        {
+            HitCircleBitmap = SKBitmap.Decode(Path.Combine("skin", "hitcircle.png"));
+            HitCircleOverlayBitmap = SKBitmap.Decode(Path.Combine("skin", "hitcircleoverlay.png"));
+        }
 
         public static void DrawHitCircle(SKCanvas canvas, int gameTime, HitCircle circle)
         {
@@ -41,18 +50,15 @@ namespace bmviewer
                 (gameTime < t2) ? 1.0 :
                                   1.0 + 0.3 * Math.Sqrt(Math.Sin(Math.PI * fadeOutProgress / 2.0));
 
-            var circleStyle = new SKPaint
-            {
-                IsAntialias = true,
-                IsStroke = true,
-                Color = SKColor.FromHsv(0, 0, 80, (byte)transparency),
-                StrokeWidth = 6
-            };
-            canvas.DrawCircle(circle.StackedPosition.X, circle.StackedPosition.Y, (float)(scale * circle.Radius) / 2.0f, circleStyle);
-
-            //if (gameTime < t2)
+            DrawCircleImage(canvas, circle.StackedPosition, (float)(scale * circle.Radius) / 2.0f, HitCircleBitmap, (byte)transparency);
+            //var circleStyle = new SKPaint
             //{
-            //}
+            //    IsAntialias = true,
+            //    IsStroke = true,
+            //    Color = SKColor.FromHsv(0, 0, 80, (byte)transparency),
+            //    StrokeWidth = 1
+            //};
+            //canvas.DrawCircle(circle.StackedPosition.X, circle.StackedPosition.Y, (float)(scale * circle.Radius) / 2.0f, circleStyle);
         }
         public static void DrawSlider(SKCanvas canvas, int gameTime, Slider slider, double velocity)
         {
@@ -89,7 +95,7 @@ namespace bmviewer
                 StrokeCap = SKStrokeCap.Round,
                 IsAntialias = true,
                 Color = new SKColor(98, 114, 164, (byte)(0.5f*bodyTransparency)),
-                StrokeWidth = (float)slider.Radius
+                StrokeWidth = 0.95f*(float)slider.Radius
             };
             var sliderBodyStyle = new SKPaint
             {
@@ -139,7 +145,9 @@ namespace bmviewer
             ////////////////////////////////
             // draw slider head
             ////////////////////////////////
-            double headFadeOutProgress = (gameTime - t2) / 250.0;
+            double headFadeOutProgress =
+                (gameTime < t2 + 250.0) ? (gameTime - t2) / 250.0
+                                        : 1.0f;
             double headTransparency =
                 (gameTime < t0) ? 0 :
                 (gameTime < t1) ? 255 * fadeInProgress :
@@ -150,14 +158,15 @@ namespace bmviewer
                 (gameTime < t2) ? 1.0 :
                                   1.0 + 0.3 * Math.Sqrt(Math.Sin(Math.PI * headFadeOutProgress / 2.0));
 
-            var circleStyle = new SKPaint
-            {
-                IsAntialias = true,
-                IsStroke = true,
-                Color = SKColor.FromHsv(0, 0, 80, (byte)headTransparency),
-                StrokeWidth = 6
-            };
-            canvas.DrawCircle(slider.StackedPosition.X, slider.StackedPosition.Y, (float)(headScale * slider.Radius) / 2.0f, circleStyle);
+            DrawCircleImage(canvas, slider.StackedPosition, (float)(headScale * slider.Radius) / 2.0f, HitCircleBitmap, (byte)headTransparency);
+            //var circleStyle = new SKPaint
+            //{
+            //    IsAntialias = true,
+            //    IsStroke = true,
+            //    Color = SKColor.FromHsv(0, 0, 80, (byte)headTransparency),
+            //    StrokeWidth = 6
+            //};
+            //canvas.DrawCircle(slider.StackedPosition.X, slider.StackedPosition.Y, (float)(headScale * slider.Radius) / 2.0f, circleStyle);
         }
         public static void DrawApproachCircle(SKCanvas canvas, int gameTime, OsuHitObject obj)
         {
@@ -179,6 +188,15 @@ namespace bmviewer
             };
             canvas.DrawCircle(obj.StackedPosition.X, obj.StackedPosition.Y, (approachCircleScale * (float)obj.Radius) / 2.0f, approachCircleStyle);
             return;
+        }
+        public static void DrawCircleImage(SKCanvas canvas, osuTK.Vector2 pos, float r, SKBitmap bitmap, byte alpha = 255)
+        {
+            if (float.IsNaN(r))
+                Console.WriteLine("wtf");
+            // Scale bitmap (warning: inefficient)
+            var imgPos = new SKPoint(pos.X - r, pos.Y - r);
+            var scaledBitmap = bitmap.Resize(new SKImageInfo((int)(r * 2), (int)(r * 2)), SKFilterQuality.High);
+            canvas.DrawBitmap(scaledBitmap, imgPos, new SKPaint() { Color = new SKColor(0, 0, 0, alpha) });
         }
     }
 }
