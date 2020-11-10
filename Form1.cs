@@ -95,8 +95,23 @@ namespace bmviewer
             // draw the game
             canvas.Clear(SKColors.Black);
 
+            // filter visible objects
+            bool ObjectIsVisible(HitObject obj)
+            {
+                switch (obj)
+                {
+                    case HitCircle c:
+                        return gameTime > (c.StartTime - 1000) && gameTime < (c.StartTime + 250);
+                    case Slider s:
+                        return gameTime > (s.StartTime - 1000) && gameTime < (s.EndTime + 250);
+                    default:
+                        return false;
+                }
+            }
+            var visibleObjects = beatmap.HitObjects.Where(ObjectIsVisible);
+            
             // draw objects
-            foreach (OsuHitObject obj in beatmap.HitObjects.AsEnumerable().Reverse())
+            foreach (OsuHitObject obj in visibleObjects.AsEnumerable().Reverse())
             {
                 switch (obj)
                 {
@@ -104,7 +119,7 @@ namespace bmviewer
                         DrawFunctions.DrawHitCircle(canvas, gameTime, hitCircle);
                         break;
                     case Slider slider:
-                        DrawFunctions.DrawSlider(canvas, gameTime, slider);
+                        DrawFunctions.DrawSlider(canvas, gameTime, slider, beatmap.ControlPointInfo.TimingPointAt(gameTime));
                         break;
                 }
             }
