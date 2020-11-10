@@ -18,6 +18,8 @@ namespace bmviewer
         static float approachCircleMaxScale = 3.7f;
         static SKBitmap HitCircleBitmap;
         static SKBitmap HitCircleOverlayBitmap;
+        static float offsetX = 80;
+        static float offsetY = 80;
 
         public static void LoadSkin()
         {
@@ -51,6 +53,7 @@ namespace bmviewer
                                   1.0 + 0.3 * Math.Sqrt(Math.Sin(Math.PI * fadeOutProgress / 2.0));
 
             DrawCircleImage(canvas, circle.StackedPosition, (float)(scale * circle.Radius) / 2.0f, HitCircleBitmap, (byte)transparency);
+            DrawCircleImage(canvas, circle.StackedPosition, (float)(scale * circle.Radius) / 2.0f, HitCircleOverlayBitmap, (byte)transparency);
             //var circleStyle = new SKPaint
             //{
             //    IsAntialias = true,
@@ -110,7 +113,7 @@ namespace bmviewer
             var drawPath = new SKPath();
             foreach (var pathPoint in sliderPath)
             {
-                var absPoint = new SKPoint(slider.StackedPosition.X + pathPoint.X, slider.StackedPosition.Y + pathPoint.Y);
+                var absPoint = new SKPoint(slider.StackedPosition.X + pathPoint.X + offsetX, slider.StackedPosition.Y + pathPoint.Y + offsetY);
                 if (drawPath.PointCount == 0)
                     drawPath.MoveTo(absPoint);
                 else
@@ -139,7 +142,7 @@ namespace bmviewer
                     Color = SKColor.FromHsv(0, 0, 80),
                     StrokeWidth = 4
                 };
-                canvas.DrawCircle(followCirclePosition.X, followCirclePosition.Y, 0.85f*(float)slider.Radius / 2.0f, followCircleStyle);
+                canvas.DrawCircle(followCirclePosition.X + offsetX, followCirclePosition.Y + offsetY, 0.85f*(float)slider.Radius / 2.0f, followCircleStyle);
             }
 
             ////////////////////////////////
@@ -158,7 +161,7 @@ namespace bmviewer
                 (gameTime < t2) ? 1.0 :
                                   1.0 + 0.3 * Math.Sqrt(Math.Sin(Math.PI * headFadeOutProgress / 2.0));
 
-            DrawCircleImage(canvas, slider.StackedPosition, (float)(headScale * slider.Radius) / 2.0f, HitCircleBitmap, (byte)headTransparency);
+            DrawCircleImage(canvas, slider.StackedPosition, (float)(headScale * slider.Radius) / 2.0f, HitCircleOverlayBitmap, (byte)headTransparency);
             //var circleStyle = new SKPaint
             //{
             //    IsAntialias = true,
@@ -186,15 +189,13 @@ namespace bmviewer
                 Color = SKColor.FromHsv(0, 0, 80, (byte)transparency),
                 StrokeWidth = 4
             };
-            canvas.DrawCircle(obj.StackedPosition.X, obj.StackedPosition.Y, (approachCircleScale * (float)obj.Radius) / 2.0f, approachCircleStyle);
+            canvas.DrawCircle(obj.StackedPosition.X + offsetX, obj.StackedPosition.Y + offsetY, (approachCircleScale * (float)obj.Radius) / 2.0f, approachCircleStyle);
             return;
         }
         public static void DrawCircleImage(SKCanvas canvas, osuTK.Vector2 pos, float r, SKBitmap bitmap, byte alpha = 255)
         {
-            if (float.IsNaN(r))
-                Console.WriteLine("wtf");
             // Scale bitmap (warning: inefficient)
-            var imgPos = new SKPoint(pos.X - r, pos.Y - r);
+            var imgPos = new SKPoint(pos.X - r + offsetX, pos.Y - r + offsetY);
             var scaledBitmap = bitmap.Resize(new SKImageInfo((int)(r * 2), (int)(r * 2)), SKFilterQuality.High);
             canvas.DrawBitmap(scaledBitmap, imgPos, new SKPaint() { Color = new SKColor(0, 0, 0, alpha) });
         }

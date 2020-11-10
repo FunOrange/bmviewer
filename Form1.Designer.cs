@@ -36,6 +36,7 @@
             this.gameTimer = new System.Windows.Forms.Timer(this.components);
             this.restartButton = new System.Windows.Forms.Button();
             this.playPauseButton = new System.Windows.Forms.Button();
+            this.aimStrainPlot = new ScottPlot.FormsPlot();
             ((System.ComponentModel.ISupportInitialize)(this.timeUpDown)).BeginInit();
             this.SuspendLayout();
             // 
@@ -113,11 +114,19 @@
             this.playPauseButton.UseVisualStyleBackColor = true;
             this.playPauseButton.Click += new System.EventHandler(this.playPauseButton_Click);
             // 
+            // aimStrainPlot
+            // 
+            this.aimStrainPlot.Location = new System.Drawing.Point(54, 507);
+            this.aimStrainPlot.Name = "aimStrainPlot";
+            this.aimStrainPlot.Size = new System.Drawing.Size(696, 130);
+            this.aimStrainPlot.TabIndex = 8;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(762, 505);
+            this.ClientSize = new System.Drawing.Size(762, 652);
+            this.Controls.Add(this.aimStrainPlot);
             this.Controls.Add(this.playPauseButton);
             this.Controls.Add(this.restartButton);
             this.Controls.Add(this.skControl);
@@ -141,6 +150,7 @@
         private System.Windows.Forms.Timer gameTimer;
         private System.Windows.Forms.Button restartButton;
         private System.Windows.Forms.Button playPauseButton;
+        private ScottPlot.FormsPlot aimStrainPlot;
     }
 }
 

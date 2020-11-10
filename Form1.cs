@@ -12,12 +12,18 @@ using osu.Game.Rulesets.Osu.Objects;
 using osu.Game.Rulesets.Objects.Legacy.Osu;
 using System.Diagnostics;
 using osu.Game.Rulesets.Osu.Beatmaps;
+using osu.Game.Rulesets.Osu.Difficulty;
+using osu.Game.Rulesets.Osu;
+using osu.Game.Rulesets.Mods;
+using osu.Game.Rulesets.Osu.Difficulty.Skills;
+using ScottPlot;
 
 namespace bmviewer
 {
     public partial class Form1 : Form
     {
         OsuBeatmap beatmap;
+        OsuDifficultyCalculator calculator;
         int gameTime = 0;
         Stopwatch stopwatch = new Stopwatch();
 
@@ -27,7 +33,7 @@ namespace bmviewer
         {
             InitializeComponent();
             DrawFunctions.LoadSkin();
-            beatmap = LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Insane].osu");
+            beatmap = LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\1091022 Minase Inori - brave climber\Minase Inori - brave climber (-Brethia) [courage 1.32x (250bpm) AR10].osu");
             stopwatch.Start();
             gameTimer.Start();
         }
@@ -67,13 +73,35 @@ namespace bmviewer
             var processor = new OsuBeatmapProcessor(osuBeatmap);
             processor.PreProcess();
             processor.PostProcess();
+
+            var workingBeatmap = new PpWorkingBeatmap(convertBeatmap);
+            calculator = new OsuDifficultyCalculator(new OsuRuleset(), workingBeatmap);
+            var diffAttributes = calculator.Calculate(new Mod[] { });
+            var aim = (Aim)diffAttributes.Skills[0];
+            PlotAimStrain(aim.RawStrainTimes, aim.RawStrainValues);
             Text = $"bmviewer - {convertBeatmap}";
             return osuBeatmap;
         }
 
-        private void renderButton_Click(object sender, EventArgs e)
+        private void PlotAimStrain(List<double> times, List<double> values)
         {
-            skControl.Invalidate();
+            aimStrainPlot.plt.Clear();
+            aimStrainPlot.plt.Ticks(false, false);
+            aimStrainPlot.plt.Frame(false);
+            aimStrainPlot.plt.Style(Style.Blue2);
+            aimStrainPlot.plt.YLabel("KPS");
+            float w = 0.05f;
+            //aimStrainPlot.plt.PlotVSpan(y1: 13.33 - w, y2: 13.33 + w, label: "200 bpm streams");
+            aimStrainPlot.plt.PlotScatter(
+                times.ToArray(), values.ToArray(),
+                //lineWidth: 0,
+                color: System.Drawing.Color.FromArgb(15, 255, 85),
+                markerSize: 2,
+                markerShape: MarkerShape.filledCircle
+            );
+            aimStrainPlot.plt.Axis(null, null, 0, null);
+            aimStrainPlot.plt.TightenLayout(padding: 0);
+            aimStrainPlot.Render();
         }
 
         private void skControl_PaintSurface(object sender, SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs e)
@@ -170,6 +198,11 @@ namespace bmviewer
         private void timeUpDown_ValueChanged(object sender, EventArgs e)
         {
             SetGameTime((int)timeUpDown.Value);
+        }
+
+        private void CalculateStrain()
+        {
+
         }
     }
 }
