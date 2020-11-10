@@ -63,8 +63,12 @@ namespace bmviewer
         private OsuBeatmap LoadBeatmapFromFile(string beatmapPath)
         {
             var convertBeatmap = ReadBeatmap(beatmapPath);
+            var osuBeatmap = (OsuBeatmap)new OsuBeatmapConverter(convertBeatmap).Convert();
+            var processor = new OsuBeatmapProcessor(osuBeatmap);
+            processor.PreProcess();
+            processor.PostProcess();
             Text = $"bmviewer - {convertBeatmap}";
-            return (OsuBeatmap)(new OsuBeatmapConverter(convertBeatmap).Convert());
+            return osuBeatmap;
         }
 
         private void LoadSkin()
@@ -100,9 +104,15 @@ namespace bmviewer
                 switch (obj)
                 {
                     case HitCircle c:
-                        return gameTime > (c.StartTime - 1000) && gameTime < (c.StartTime + 250);
+                        return gameTime > (c.StartTime - c.TimePreempt) && gameTime < (c.StartTime + 250);
                     case Slider s:
-                        return gameTime > (s.StartTime - 1000) && gameTime < (s.EndTime + 250);
+                        var mul1 = beatmap.BeatmapInfo.BaseDifficulty.SliderMultiplier;
+                        var mul2 = beatmap.ControlPointInfo.DifficultyPointAt(s.StartTime).SpeedMultiplier;
+                        double sliderMultiplier = mul1 * mul2;
+                        double velocity = 100 * sliderMultiplier / beatmap.ControlPointInfo.TimingPointAt(s.StartTime).BeatLength;
+                        double slideDuration = s.Path.Distance / velocity;
+                        double totalSlideDuration = slideDuration * (s.RepeatCount + 1);
+                        return gameTime > (s.StartTime - s.TimePreempt) && gameTime < (s.StartTime + totalSlideDuration + 250);
                     default:
                         return false;
                 }
@@ -110,22 +120,25 @@ namespace bmviewer
             var visibleObjects = beatmap.HitObjects.Where(ObjectIsVisible);
 
             // draw objects
-            var mul1 = beatmap.BeatmapInfo.BaseDifficulty.SliderMultiplier;
-            var mul2 = beatmap.ControlPointInfo.DifficultyPointAt(gameTime).SpeedMultiplier;
-            double sliderMultiplier = mul1 * mul2;
             foreach (OsuHitObject obj in visibleObjects.AsEnumerable().Reverse())
             {
                 switch (obj)
                 {
-                    case HitCircle h:
-                        DrawFunctions.DrawHitCircle(canvas, gameTime, h);
+                    case HitCircle c:
+                        DrawFunctions.DrawHitCircle(canvas, gameTime, c);
                         break;
                     case Slider s:
-                        DrawFunctions.DrawSlider(canvas, gameTime, s, sliderMultiplier);
+                        var mul1 = beatmap.BeatmapInfo.BaseDifficulty.SliderMultiplier;
+                        var mul2 = beatmap.ControlPointInfo.DifficultyPointAt(s.StartTime).SpeedMultiplier;
+                        double sliderMultiplier = mul1 * mul2;
+                        double velocity = 100 * sliderMultiplier / beatmap.ControlPointInfo.TimingPointAt(s.StartTime).BeatLength;
+                        DrawFunctions.DrawSlider(canvas, gameTime, s, velocity);
                         break;
                 }
             }
-
+            // draw approach circles on top of everything
+            foreach (OsuHitObject obj in visibleObjects.Where(o => gameTime <= o.StartTime).Reverse())
+                DrawFunctions.DrawApproachCircle(canvas, gameTime, obj);
         }
 
         private void gameTimer_Tick(object sender, EventArgs e)
