@@ -26,10 +26,8 @@ namespace bmviewer
         public Form1()
         {
             InitializeComponent();
-            var convertBeatmap = ReadBeatmap(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Insane].osu");
-            beatmap = (OsuBeatmap)(new OsuBeatmapConverter(convertBeatmap).Convert());
-            Text = $"bmviewer - {beatmap}";
-            Console.WriteLine(beatmap);
+            LoadSkin();
+            beatmap = LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\24601 Hatsune Miku - Everless\Hatsune Miku - Everless (eveless) [Insane].osu");
             stopwatch.Start();
             gameTimer.Start();
         }
@@ -52,10 +50,8 @@ namespace bmviewer
             if (filePath == "")
                 return;
 
-            // Load beatmap
-            //beatmap = LoadBeatmap(filePath);
-            //Text = $"bmviewer - {beatmap}";
-            //gameTime = 0;
+            beatmap = LoadBeatmapFromFile(filePath);
+            gameTime = 0;
         }
 
         private Beatmap ReadBeatmap(string beatmapPath)
@@ -63,6 +59,12 @@ namespace bmviewer
             using (var stream = File.OpenRead(beatmapPath))
             using (var streamReader = new LineBufferedReader(stream))
                 return osu.Game.Beatmaps.Formats.Decoder.GetDecoder<Beatmap>(streamReader).Decode(streamReader);
+        }
+        private OsuBeatmap LoadBeatmapFromFile(string beatmapPath)
+        {
+            var convertBeatmap = ReadBeatmap(beatmapPath);
+            Text = $"bmviewer - {convertBeatmap}";
+            return (OsuBeatmap)(new OsuBeatmapConverter(convertBeatmap).Convert());
         }
 
         private void LoadSkin()
@@ -77,23 +79,20 @@ namespace bmviewer
 
         private void skControl_PaintSurface(object sender, SkiaSharp.Views.Desktop.SKPaintSurfaceEventArgs e)
         {
-            Console.WriteLine("redraw");
             var surface = e.Surface;
             var width = e.Info.Width;
             var height = e.Info.Height;
             var canvas = surface.Canvas;
 
-            Render(canvas, width, height);
+            canvas.Clear(SKColors.Black);
+            RenderGame(canvas, width, height);
             canvas.Flush();
         }
 
-        private void Render(SKCanvas canvas, int width, int height)
+        private void RenderGame(SKCanvas canvas, int width, int height)
         {
             if (beatmap == null)
                 return;
-
-            // draw the game
-            canvas.Clear(SKColors.Black);
 
             // filter visible objects
             bool ObjectIsVisible(HitObject obj)
@@ -109,20 +108,24 @@ namespace bmviewer
                 }
             }
             var visibleObjects = beatmap.HitObjects.Where(ObjectIsVisible);
-            
+
             // draw objects
+            var mul1 = beatmap.BeatmapInfo.BaseDifficulty.SliderMultiplier;
+            var mul2 = beatmap.ControlPointInfo.DifficultyPointAt(gameTime).SpeedMultiplier;
+            double sliderMultiplier = mul1 * mul2;
             foreach (OsuHitObject obj in visibleObjects.AsEnumerable().Reverse())
             {
                 switch (obj)
                 {
-                    case HitCircle hitCircle:
-                        DrawFunctions.DrawHitCircle(canvas, gameTime, hitCircle);
+                    case HitCircle h:
+                        DrawFunctions.DrawHitCircle(canvas, gameTime, h);
                         break;
-                    case Slider slider:
-                        DrawFunctions.DrawSlider(canvas, gameTime, slider, beatmap.ControlPointInfo.TimingPointAt(gameTime));
+                    case Slider s:
+                        DrawFunctions.DrawSlider(canvas, gameTime, s, sliderMultiplier);
                         break;
                 }
             }
+
         }
 
         private void gameTimer_Tick(object sender, EventArgs e)
