@@ -37,7 +37,10 @@
             this.restartButton = new System.Windows.Forms.Button();
             this.playPauseButton = new System.Windows.Forms.Button();
             this.aimStrainPlot = new ScottPlot.FormsPlot();
+            this.aimStrainMeter = new ScottPlot.FormsPlot();
+            this.trackBar1 = new System.Windows.Forms.TrackBar();
             ((System.ComponentModel.ISupportInitialize)(this.timeUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.SuspendLayout();
             // 
             // openButton
@@ -79,9 +82,8 @@
             // 
             // skControl
             // 
-            this.skControl.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.skControl.BackColor = System.Drawing.Color.Black;
-            this.skControl.Location = new System.Drawing.Point(110, 12);
+            this.skControl.Location = new System.Drawing.Point(104, 12);
             this.skControl.Name = "skControl";
             this.skControl.Size = new System.Drawing.Size(640, 480);
             this.skControl.TabIndex = 6;
@@ -116,16 +118,36 @@
             // 
             // aimStrainPlot
             // 
-            this.aimStrainPlot.Location = new System.Drawing.Point(54, 507);
+            this.aimStrainPlot.Location = new System.Drawing.Point(750, 12);
             this.aimStrainPlot.Name = "aimStrainPlot";
-            this.aimStrainPlot.Size = new System.Drawing.Size(696, 130);
+            this.aimStrainPlot.Size = new System.Drawing.Size(467, 480);
             this.aimStrainPlot.TabIndex = 8;
+            // 
+            // aimStrainMeter
+            // 
+            this.aimStrainMeter.Location = new System.Drawing.Point(1223, 12);
+            this.aimStrainMeter.Name = "aimStrainMeter";
+            this.aimStrainMeter.Size = new System.Drawing.Size(108, 480);
+            this.aimStrainMeter.TabIndex = 9;
+            // 
+            // trackBar1
+            // 
+            this.trackBar1.LargeChange = 100;
+            this.trackBar1.Location = new System.Drawing.Point(104, 498);
+            this.trackBar1.Maximum = 100000;
+            this.trackBar1.Name = "trackBar1";
+            this.trackBar1.Size = new System.Drawing.Size(640, 45);
+            this.trackBar1.SmallChange = 10;
+            this.trackBar1.TabIndex = 10;
+            this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(762, 652);
+            this.ClientSize = new System.Drawing.Size(1414, 556);
+            this.Controls.Add(this.trackBar1);
+            this.Controls.Add(this.aimStrainMeter);
             this.Controls.Add(this.aimStrainPlot);
             this.Controls.Add(this.playPauseButton);
             this.Controls.Add(this.restartButton);
@@ -137,6 +159,7 @@
             this.ShowIcon = false;
             this.Text = "bmviewer";
             ((System.ComponentModel.ISupportInitialize)(this.timeUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -151,6 +174,8 @@
         private System.Windows.Forms.Button restartButton;
         private System.Windows.Forms.Button playPauseButton;
         private ScottPlot.FormsPlot aimStrainPlot;
+        private ScottPlot.FormsPlot aimStrainMeter;
+        private System.Windows.Forms.TrackBar trackBar1;
     }
 }
 
