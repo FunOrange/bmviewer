@@ -91,7 +91,7 @@
             // gameTimer
             // 
             this.gameTimer.Enabled = true;
-            this.gameTimer.Interval = 7;
+            this.gameTimer.Interval = 6;
             this.gameTimer.Tick += new System.EventHandler(this.gameTimer_Tick);
             // 
             // restartButton

@@ -26,6 +26,7 @@ namespace bmviewer
         OsuDifficultyCalculator calculator;
         int gameTime = 0;
         Stopwatch stopwatch = new Stopwatch();
+        long stopwatchStartTime = 0;
 
         // Skin elements
 
@@ -95,8 +96,8 @@ namespace bmviewer
             aimStrainPlot.plt.PlotScatter(
                 times.ToArray(), values.ToArray(),
                 //lineWidth: 0,
-                color: System.Drawing.Color.FromArgb(15, 255, 85),
-                markerSize: 2,
+                color: System.Drawing.Color.FromArgb(255, 85, 85),
+                markerSize: 6,
                 markerShape: MarkerShape.filledCircle
             );
             aimStrainPlot.plt.Axis(null, null, 0, null);
@@ -166,8 +167,7 @@ namespace bmviewer
 
         private void gameTimer_Tick(object sender, EventArgs e)
         {
-            SetGameTime(gameTime + (int)stopwatch.ElapsedMilliseconds);
-            stopwatch.Restart();
+            SetGameTime((int)stopwatchStartTime + (int)stopwatch.ElapsedMilliseconds);
         }
 
         private void restartButton_Click(object sender, EventArgs e)
@@ -180,23 +180,32 @@ namespace bmviewer
             gameTime = time;
             timeUpDown.Value = gameTime;
             skControl.Invalidate();
+
+            // Update plot time axis
+            aimStrainPlot.plt.Axis(x1: gameTime - 2000, x2: gameTime);
+            aimStrainPlot.Render();
         }
 
         private void playPauseButton_Click(object sender, EventArgs e)
         {
             if (gameTimer.Enabled)
+            {
                 gameTimer.Stop();
-            else
-                gameTimer.Start();
-
-            if (stopwatch.IsRunning)
                 stopwatch.Stop();
+            }
             else
+            {
+                SetGameTime((int)timeUpDown.Value);
+                stopwatchStartTime = gameTime;
+                gameTimer.Start();
                 stopwatch.Restart();
+            }
         }
 
         private void timeUpDown_ValueChanged(object sender, EventArgs e)
         {
+            if (gameTimer.Enabled)
+                return;
             SetGameTime((int)timeUpDown.Value);
         }
 
