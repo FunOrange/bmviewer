@@ -18,6 +18,7 @@ using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu.Difficulty.Skills;
 using ScottPlot;
 using osu.Framework.Audio.Track;
+using OpenTK.Graphics.OpenGL;
 
 namespace bmviewer
 {
@@ -33,6 +34,10 @@ namespace bmviewer
         Plotter plotter = new Plotter();
         List<double> aimStrainTimes;
         List<double> aimStrainValues;
+        List<double> denseAimStrainTimes;
+        List<double> denseAimStrainValues;
+        List<double> aimStrainPeakTimes;
+        List<double> aimStrainPeaks;
 
         // Skin elements
 
@@ -84,8 +89,8 @@ namespace bmviewer
         {
             // Load osu beatmap
             var convertBeatmap = ReadBeatmap(beatmapPath);
-            var osuBeatmap = (OsuBeatmap)new OsuBeatmapConverter(convertBeatmap).Convert();
-            var processor = new OsuBeatmapProcessor(osuBeatmap);
+            beatmap = (OsuBeatmap)new OsuBeatmapConverter(convertBeatmap).Convert();
+            var processor = new OsuBeatmapProcessor(beatmap);
             processor.PreProcess();
             processor.PostProcess();
 
@@ -94,14 +99,20 @@ namespace bmviewer
             calculator = new OsuDifficultyCalculator(new OsuRuleset(), workingBeatmap);
             var diffAttributes = calculator.Calculate(new Mod[] { });
             var aim = (Aim)diffAttributes.Skills[0];
-            aimStrainTimes = aim.RawStrainTimes;
-            aimStrainValues = aim.RawStrainValues;
+            aimStrainTimes = aim.StrainTimes;
+            aimStrainValues = aim.StrainValues;
+            aimStrainPeakTimes = aim.strainPeakTimes;
+            aimStrainPeaks = aim.strainPeaks;
+            (denseAimStrainTimes, denseAimStrainValues) = plotter.CalculateDenseStrainValues(aim.StrainTimes, aim.StrainValues);
 
             // Plot aim strain
-            plotter.PlotAimStrain(aimStrainPlot.plt, aim.RawStrainTimes, aim.RawStrainValues);
+            aimStrainPlot.plt.Clear();
+            plotter.PlotAimStrainPeaks(aimStrainPlot.plt, aimStrainPeakTimes, aimStrainPeaks);
+            plotter.PlotAimStrainGraph(aimStrainPlot.plt, denseAimStrainTimes, denseAimStrainValues);
+            plotter.PlotAimStrainPerObject(aimStrainPlot.plt, aimStrainTimes, aim.StrainPerObjectValues);
             aimStrainPlot.Render();
+
             Text = $"bmviewer - {convertBeatmap}";
-            beatmap = osuBeatmap;
 
             // Update GUI controls
             // TODO: Use events to update values
@@ -202,11 +213,11 @@ namespace bmviewer
             skControl.Invalidate();
 
             // Update aim strain plot time range
-            aimStrainPlot.plt.Axis(x1: gameTime - 2000, x2: gameTime, y1: 0, y2: aimStrainValues.Max());
+            aimStrainPlot.plt.Axis(x1: gameTime - 2000, x2: gameTime, y1: 0, y2: aimStrainValues.Max()+50);
             aimStrainPlot.Render();
 
             // Update aim strain meter
-            plotter.UpdateAimStrainMeter(aimStrainMeter.plt, aimStrainTimes, aimStrainValues, gameTime);
+            plotter.UpdateAimStrainMeter(aimStrainMeter.plt, denseAimStrainTimes, denseAimStrainValues, aimStrainPeakTimes, aimStrainPeaks, gameTime);
             aimStrainMeter.Render();
         }
 
