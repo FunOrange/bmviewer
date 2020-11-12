@@ -24,6 +24,9 @@ namespace bmviewer
         {
             sortedPeaksPlot.Frame(false);
             sortedPeaksPlot.Style(Style.Blue2);
+            sortedPeaksPlot.Title("Sorted Section Strain Peaks");
+            sortedPeaksPlot.YLabel("Aim Strain");
+            sortedPeaksPlot.XLabel("Rank");
         }
         public void PlotAimStrainGraph(Plot aimStrainPlot, List<double> times, List<double> values)
         {
@@ -212,6 +215,17 @@ namespace bmviewer
             }
 
             // Plot weighted peaks
+            foreach ((double rank, double time, double value) in rankedPeaks)
+            {
+                double weightedValue = value * Math.Pow(0.90, rank);
+                sortedPeaksPlot.PlotBar(
+                    new double[] {rank},
+                    new double[] {Math.Round(weightedValue)},
+                    barWidth: 0.95,
+                    fillColor: Color.FromArgb(70, 189, 147, 249),
+                    outlineWidth: 0
+                );
+            }
 
             sortedPeaksPlot.AxisAuto(xExpandOnly: true, yExpandOnly: true);
             sortedPeaksPlot.Axis(x1: -0.5, x2: 30.5, y1: 0, y2: aimStrainPeaks.Max());
