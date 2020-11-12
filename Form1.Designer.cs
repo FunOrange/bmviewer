@@ -39,6 +39,7 @@
             this.aimStrainPlot = new ScottPlot.FormsPlot();
             this.aimStrainMeter = new ScottPlot.FormsPlot();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
+            this.sortedPeaksPlot = new ScottPlot.FormsPlot();
             ((System.ComponentModel.ISupportInitialize)(this.timeUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.SuspendLayout();
@@ -120,14 +121,14 @@
             // 
             this.aimStrainPlot.Location = new System.Drawing.Point(750, 12);
             this.aimStrainPlot.Name = "aimStrainPlot";
-            this.aimStrainPlot.Size = new System.Drawing.Size(467, 480);
+            this.aimStrainPlot.Size = new System.Drawing.Size(467, 278);
             this.aimStrainPlot.TabIndex = 8;
             // 
             // aimStrainMeter
             // 
             this.aimStrainMeter.Location = new System.Drawing.Point(1223, 12);
             this.aimStrainMeter.Name = "aimStrainMeter";
-            this.aimStrainMeter.Size = new System.Drawing.Size(108, 480);
+            this.aimStrainMeter.Size = new System.Drawing.Size(108, 278);
             this.aimStrainMeter.TabIndex = 9;
             // 
             // trackBar1
@@ -141,11 +142,19 @@
             this.trackBar1.TabIndex = 10;
             this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             // 
+            // sortedPeaksPlot
+            // 
+            this.sortedPeaksPlot.Location = new System.Drawing.Point(750, 296);
+            this.sortedPeaksPlot.Name = "sortedPeaksPlot";
+            this.sortedPeaksPlot.Size = new System.Drawing.Size(581, 196);
+            this.sortedPeaksPlot.TabIndex = 11;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1414, 556);
+            this.Controls.Add(this.sortedPeaksPlot);
             this.Controls.Add(this.trackBar1);
             this.Controls.Add(this.aimStrainMeter);
             this.Controls.Add(this.aimStrainPlot);
@@ -176,6 +185,7 @@
         private ScottPlot.FormsPlot aimStrainPlot;
         private ScottPlot.FormsPlot aimStrainMeter;
         private System.Windows.Forms.TrackBar trackBar1;
+        private ScottPlot.FormsPlot sortedPeaksPlot;
     }
 }
 

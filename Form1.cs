@@ -47,16 +47,12 @@ namespace bmviewer
             DrawFunctions.LoadSkin();
             //LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\1091022 Minase Inori - brave climber\Minase Inori - brave climber (-Brethia) [courage 1.32x (250bpm) AR10].osu");
             LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\1200218 The Living Tombstone - Goodbye Moonmen- Rick and Morty Remix\The Living Tombstone - Goodbye Moonmen- Rick and Morty Remix (Kyrian) [Pog].osu");
-            InitAimStrainMeter();
+            plotter.InitAimStrainMeter(aimStrainMeter.plt);
+            plotter.InitSortedPeaksPlot(sortedPeaksPlot.plt);
             stopwatch.Start();
             gameTimer.Start();
         }
 
-        private void InitAimStrainMeter()
-        {
-            aimStrainMeter.plt.Frame(false);
-            aimStrainMeter.plt.Style(Style.Blue2);
-        }
 
         private void openButton_Click(object sender, EventArgs e)
         {
@@ -116,6 +112,8 @@ namespace bmviewer
 
             // Update GUI controls
             // TODO: Use events to update values
+            timeUpDown.Minimum = (int)beatmap.HitObjects.First().StartTime - 1000;
+            trackBar1.Minimum = (int)beatmap.HitObjects.First().StartTime - 1000;
             timeUpDown.Maximum = (int)beatmap.HitObjects.Last().StartTime + 10000;
             trackBar1.Maximum = (int)beatmap.HitObjects.Last().StartTime + 10000;
 
@@ -217,8 +215,14 @@ namespace bmviewer
             aimStrainPlot.Render();
 
             // Update aim strain meter
+            aimStrainMeter.plt.Clear();
             plotter.UpdateAimStrainMeter(aimStrainMeter.plt, denseAimStrainTimes, denseAimStrainValues, aimStrainPeakTimes, aimStrainPeaks, gameTime);
             aimStrainMeter.Render();
+
+            // Update sorted peaks graph
+            sortedPeaksPlot.plt.Clear();
+            plotter.PlotSortedPeaks(sortedPeaksPlot.plt, aimStrainPeakTimes, aimStrainPeaks, gameTime);
+            sortedPeaksPlot.Render();
         }
 
         private void playPauseButton_Click(object sender, EventArgs e)
