@@ -46,7 +46,8 @@ namespace bmviewer
             InitializeComponent();
             DrawFunctions.LoadSkin();
             //LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\1091022 Minase Inori - brave climber\Minase Inori - brave climber (-Brethia) [courage 1.32x (250bpm) AR10].osu");
-            LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\1200218 The Living Tombstone - Goodbye Moonmen- Rick and Morty Remix\The Living Tombstone - Goodbye Moonmen- Rick and Morty Remix (Kyrian) [Pog].osu");
+            //LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\1200218 The Living Tombstone - Goodbye Moonmen- Rick and Morty Remix\The Living Tombstone - Goodbye Moonmen- Rick and Morty Remix (Kyrian) [Pog].osu");
+            LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\919187 765 MILLION ALLSTARS - UNION!!\765 MILLION ALLSTARS - UNION!! (Fu3ya_) [We are all MILLION!! 1.48x (255bpm) AR10 OD10].osu");
             plotter.InitAimStrainMeter(aimStrainMeter.plt);
             plotter.InitSortedPeaksPlot(sortedPeaksPlot.plt);
             stopwatch.Start();
@@ -102,11 +103,13 @@ namespace bmviewer
             (denseAimStrainTimes, denseAimStrainValues) = plotter.CalculateDenseStrainValues(aim.StrainTimes, aim.StrainValues);
 
             // Plot aim strain
+            PerfStopwatch.Start("Aim Strain Graph");
             aimStrainPlot.plt.Clear();
             plotter.PlotAimStrainPeaks(aimStrainPlot.plt, aimStrainPeakTimes, aimStrainPeaks);
             plotter.PlotAimStrainGraph(aimStrainPlot.plt, denseAimStrainTimes, denseAimStrainValues);
             plotter.PlotAimStrainPerObject(aimStrainPlot.plt, aimStrainTimes, aim.StrainPerObjectValues);
             aimStrainPlot.Render();
+            PerfStopwatch.Stop();
 
             Text = $"bmviewer - {convertBeatmap}";
 
@@ -208,21 +211,30 @@ namespace bmviewer
             gameTime = time;
             timeUpDown.Value = gameTime;
             trackBar1.Value = gameTime;
+            PerfStopwatch.Start("Game Draw:".PadRight(25));
             skControl.Invalidate();
+            Console.WriteLine("");
+            PerfStopwatch.Stop();
 
             // Update aim strain plot time range
-            aimStrainPlot.plt.Axis(x1: gameTime - 2000, x2: gameTime, y1: 0, y2: aimStrainValues.Max()+50);
+            PerfStopwatch.Start("Aim strain plot update".PadRight(25));
+            aimStrainPlot.plt.Axis(x1: gameTime - 2000, x2: gameTime, y1: 0, y2: aimStrainValues.Max() + 50);
             aimStrainPlot.Render();
+            PerfStopwatch.Stop();
 
             // Update aim strain meter
+            PerfStopwatch.Start("Aim strain meter update".PadRight(25));
             aimStrainMeter.plt.Clear();
             plotter.UpdateAimStrainMeter(aimStrainMeter.plt, denseAimStrainTimes, denseAimStrainValues, aimStrainPeakTimes, aimStrainPeaks, gameTime);
             aimStrainMeter.Render();
+            PerfStopwatch.Stop();
 
             // Update sorted peaks graph
+            PerfStopwatch.Start("Sorted peaks plot update".PadRight(25));
             sortedPeaksPlot.plt.Clear();
             plotter.PlotSortedPeaks(sortedPeaksPlot.plt, aimStrainPeakTimes, aimStrainPeaks, gameTime);
             sortedPeaksPlot.Render();
+            PerfStopwatch.Stop();
         }
 
         private void playPauseButton_Click(object sender, EventArgs e)

@@ -180,13 +180,15 @@ namespace bmviewer
             sortedPeaksPlot.PlotVLine(22.5, color: Color.FromArgb(255, 121, 198), lineStyle: LineStyle.Dot);
             sortedPeaksPlot.PlotVLine(28.5, color: Color.FromArgb(255, 121, 198), lineStyle: LineStyle.Dot);
 
-            // get all aim strains before gameTime
+            // get all aim strains before gameTime, limit view to first 31 ranks
             var sortedPeaks = Enumerable.Zip(aimStrainPeakTimes, aimStrainPeaks, (time, value) => (time, value))
                 .Where(peak => peak.time < gameTime)
                 .OrderBy(peak => peak.value)
                 .Reverse();
-            var ranks = Enumerable.Range(0, sortedPeaks.Count()).Select(x => (double)x).ToArray();
-            var rankedPeaks = sortedPeaks.Zip(ranks, (p, rank) => (rank, p.time, p.value));
+            var allRanks = Enumerable.Range(0, sortedPeaks.Count()).Select(x => (double)x).ToArray();
+            var rankedPeaks = sortedPeaks.Zip(allRanks, (p, rank) => (rank, p.time, p.value))
+                .Where(p => p.rank <= 30);
+            var limitedRanks = rankedPeaks.Select(p => p.rank).ToArray();
 
             // Plot old peaks
             var oldPeaks = rankedPeaks.Where(p => gameTime > p.time + OLD_THRESHOLD);
@@ -215,18 +217,20 @@ namespace bmviewer
             }
 
             // Plot weighted peaks
-            foreach ((double rank, double time, double value) in rankedPeaks)
+            var weightedPeaks = rankedPeaks
+                .Select(p => p.value * Math.Pow(0.90, p.rank))
+                .Select(x => Math.Round(x))
+                .ToArray();
+            if (weightedPeaks.Length > 0)
             {
-                double weightedValue = value * Math.Pow(0.90, rank);
                 sortedPeaksPlot.PlotBar(
-                    new double[] {rank},
-                    new double[] {Math.Round(weightedValue)},
+                    limitedRanks,
+                    weightedPeaks,
                     barWidth: 0.95,
                     fillColor: Color.FromArgb(70, 189, 147, 249),
                     outlineWidth: 0
                 );
             }
-
             sortedPeaksPlot.AxisAuto(xExpandOnly: true, yExpandOnly: true);
             sortedPeaksPlot.Axis(x1: -0.5, x2: 30.5, y1: 0, y2: aimStrainPeaks.Max());
             sortedPeaksPlot.Ticks(displayTicksXminor: false);
