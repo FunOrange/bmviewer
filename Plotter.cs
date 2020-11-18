@@ -27,8 +27,11 @@ namespace bmviewer
             sortedPeaksPlot.Title("Sorted Section Strain Peaks");
             sortedPeaksPlot.YLabel("Aim Strain");
             sortedPeaksPlot.XLabel("Rank");
+            sortedPeaksPlot.Axis(x1: -0.5, x2: PEAKS_TO_DISPLAY + 0.5, y1: 0, y2: 100);
+            sortedPeaksPlot.Ticks(displayTicksXminor: false);
+            sortedPeaksPlot.Grid(xSpacing: 1);
         }
-        public void PlotAimStrainGraph(Plot aimStrainPlot, List<double> times, List<double> values)
+        public void InitAimStrainGraph(Plot aimStrainPlot)
         {
             aimStrainPlot.Frame(false);
             aimStrainPlot.Style(Style.Blue2);
@@ -36,9 +39,71 @@ namespace bmviewer
             aimStrainPlot.XLabel("Time (ms)");
             aimStrainPlot.Ticks(displayTicksXminor: false);
             aimStrainPlot.Grid(xSpacing: 400);
-            //for (double time = 0; time < times.Last(); time += 400)
-            //    aimStrainPlot.PlotVLine(time, color: Color.FromArgb(100, 31, 119, 180), lineStyle: LineStyle.Dash);
+        }
+        public void PlotFullAimStrainGraph(Plot aimStrainPlot,
+            List<double> aimStrainPeakTimes , List<double> aimStrainPeaks,
+            List<double> denseAimStrainTimes, List<double> denseAimStrainValues,
+            List<double> aimStrainTimes     , List<double> strainPerObjectValues)
+        {
+            PlotAimStrainPeaks(aimStrainPlot, aimStrainPeakTimes, aimStrainPeaks);
+            PlotAimStrainMainGraph(aimStrainPlot, denseAimStrainTimes, denseAimStrainValues);
+            PlotAimStrainPerObject(aimStrainPlot, aimStrainTimes, strainPerObjectValues);
+        }
+        public void PlotPartialAimStrainGraph(Plot aimStrainPlot, double windowStartTime, double windowEndTime,
+            List<double> aimStrainPeakTimes , List<double> aimStrainPeaks,
+            List<double> denseAimStrainTimes, List<double> denseAimStrainValues,
+            List<double> aimStrainTimes     , List<double> strainPerObjectValues)
+        {
+            // Filter data to only points that lie within visible time window for better performance
+            // Aim strain peaks
+            double windowMargin = 400;
+            List<double> windowedAimStrainPeakTimes = new List<double>();
+            List<double> windowedAimStrainPeaks = new List<double>();
+            foreach (var (time, value) in Enumerable.Zip(aimStrainPeakTimes, aimStrainPeaks, (time, value) => (time, value)))
+            {
+                if (time >= windowStartTime - windowMargin && time <= windowEndTime + windowMargin)
+                {
+                    windowedAimStrainPeakTimes.Add(time);
+                    windowedAimStrainPeaks.Add(value);
+                }
+            }
+            PlotAimStrainPeaks(aimStrainPlot, windowedAimStrainPeakTimes, windowedAimStrainPeaks);
 
+
+            // Main aim strain graph
+            windowMargin = 100;
+            List<double> windowedDenseAimStrainTimes = new List<double>();
+            List<double> windowedDenseAimStrainValues = new List<double>();
+            foreach (var (time, value) in Enumerable.Zip(denseAimStrainTimes, denseAimStrainValues, (time, value) => (time, value)))
+            {
+                if (time >= windowStartTime - windowMargin && time <= windowEndTime + windowMargin)
+                {
+                    windowedDenseAimStrainTimes.Add(time);
+                    windowedDenseAimStrainValues.Add(value);
+                }
+            }
+            PlotAimStrainMainGraph(aimStrainPlot, windowedDenseAimStrainTimes, windowedDenseAimStrainValues);
+
+
+            // Per object strain arrows
+            windowMargin = 100;
+            List<double> windowedAimStrainTimes = new List<double>();
+            List<double> windowedStrainPerObjectValues = new List<double>();
+            foreach (var (time, value) in Enumerable.Zip(aimStrainTimes, strainPerObjectValues, (time, value) => (time, value)))
+            {
+                if (time >= windowStartTime - windowMargin && time <= windowEndTime + windowMargin)
+                {
+                    windowedAimStrainTimes.Add(time);
+                    windowedStrainPerObjectValues.Add(value);
+                }
+            }
+            PlotAimStrainPerObject(aimStrainPlot, windowedAimStrainTimes, windowedStrainPerObjectValues);
+
+        }
+        public void PlotAimStrainMainGraph(Plot aimStrainPlot, List<double> times, List<double> values)
+        {
+            if (times.Count == 0)
+                return;
             aimStrainPlot.PlotScatter(
                 times.ToArray(), values.ToArray(),
                 lineWidth: 1,
@@ -47,8 +112,11 @@ namespace bmviewer
                 markerShape: MarkerShape.none
             );
         }
+        // Draws the upwards arrows corresponding to each object's individual aim strain value
         public void PlotAimStrainPerObject (Plot aimStrainPlot, List<double> times, List<double> objectStrainValues)
         {
+            if (times.Count == 0)
+                return;
             for (int i = 0; i < times.Count; i++)
                 aimStrainPlot.PlotArrow(
                     times[i], objectStrainValues[i], times[i], 0,
@@ -59,8 +127,11 @@ namespace bmviewer
                 );
         }
 
+        // Draws the purple bars and open circles corresponding to section peaks
         public void PlotAimStrainPeaks(Plot aimStrainPlot, List<double> times, List<double> peaks)
         {
+            if (times.Count == 0)
+                return;
             double sectionCenterTime(double time) => (int)(time / 400.0) * 400 + 200;
             var sectionTimes = Enumerable.Range(0, times.Count).Select(i => sectionCenterTime(times[i])).ToArray();
             aimStrainPlot.PlotBar(
@@ -122,7 +193,7 @@ namespace bmviewer
         public (List<double>, List<double>) CalculateDenseStrainValues(List<double> times, List<double> strainValues)
         {
             double STRAIN_DECAY_RATE = 0.15; // in one second, initial value decays by this amount
-            double TIME_GRANULARITY = 10.0; // warning: low value causes lag
+            double TIME_GRANULARITY = 10.0;
 
             var dataPoints = new List<(double time, double strain)>();
             for (double time = times.Min(); time <= times.Max(); time += TIME_GRANULARITY)
@@ -171,23 +242,39 @@ namespace bmviewer
             return lastKnownStrainValue * Math.Pow(STRAIN_DECAY_RATE, timeDelta / 1000.0);
         }
 
-        public void PlotSortedPeaks(Plot sortedPeaksPlot, List<double> aimStrainPeakTimes, List<double> aimStrainPeaks, double gameTime)
+        private static double PEAKS_TO_DISPLAY = 22;
+        private static double OLD_THRESHOLD = 1000;
+        internal bool ShouldRedrawSortedPeaksPlot(List<double> aimStrainPeakTimes, List<double> aimStrainPeaks, int gameTime)
         {
-            double OLD_THRESHOLD = 600;
-
-            // Mark 7 (50%), 22 (90%), and 28 (95%)
-            sortedPeaksPlot.PlotVLine(7.5, color: Color.FromArgb(255, 121, 198), lineStyle: LineStyle.Dot);
-            sortedPeaksPlot.PlotVLine(22.5, color: Color.FromArgb(255, 121, 198), lineStyle: LineStyle.Dot);
-            sortedPeaksPlot.PlotVLine(28.5, color: Color.FromArgb(255, 121, 198), lineStyle: LineStyle.Dot);
-
-            // get all aim strains before gameTime, limit view to first 31 ranks
+            // get all aim strains before gameTime, limit view to only the first PEAKS_TO_DISPLAY peaks
             var sortedPeaks = Enumerable.Zip(aimStrainPeakTimes, aimStrainPeaks, (time, value) => (time, value))
                 .Where(peak => peak.time < gameTime)
                 .OrderBy(peak => peak.value)
                 .Reverse();
             var allRanks = Enumerable.Range(0, sortedPeaks.Count()).Select(x => (double)x).ToArray();
             var rankedPeaks = sortedPeaks.Zip(allRanks, (p, rank) => (rank, p.time, p.value))
-                .Where(p => p.rank <= 30);
+                .Where(p => p.rank <= PEAKS_TO_DISPLAY);
+            var newPeaks = rankedPeaks.Where(p => gameTime <= p.time + OLD_THRESHOLD);
+            return newPeaks.Count() > 0 || LastSortedPeaksPlotContainedNewPeaks;
+        }
+
+        public bool LastSortedPeaksPlotContainedNewPeaks = true;
+        public void PlotSortedPeaks(Plot sortedPeaksPlot, List<double> aimStrainPeakTimes, List<double> aimStrainPeaks, double gameTime)
+        {
+
+            // Mark 7 (50%), 22 (90%), and 28 (95%)
+            sortedPeaksPlot.PlotVLine(7.5, color: Color.FromArgb(255, 121, 198), lineStyle: LineStyle.Dot);
+            sortedPeaksPlot.PlotVLine(22.5, color: Color.FromArgb(255, 121, 198), lineStyle: LineStyle.Dot);
+            sortedPeaksPlot.PlotVLine(28.5, color: Color.FromArgb(255, 121, 198), lineStyle: LineStyle.Dot);
+
+            // get all aim strains before gameTime, limit view to only the first PEAKS_TO_DISPLAY peaks
+            var sortedPeaks = Enumerable.Zip(aimStrainPeakTimes, aimStrainPeaks, (time, value) => (time, value))
+                .Where(peak => peak.time < gameTime)
+                .OrderBy(peak => peak.value)
+                .Reverse();
+            var allRanks = Enumerable.Range(0, sortedPeaks.Count()).Select(x => (double)x).ToArray();
+            var rankedPeaks = sortedPeaks.Zip(allRanks, (p, rank) => (rank, p.time, p.value))
+                .Where(p => p.rank <= PEAKS_TO_DISPLAY);
             var limitedRanks = rankedPeaks.Select(p => p.rank).ToArray();
 
             // Plot old peaks
@@ -215,6 +302,7 @@ namespace bmviewer
                     outlineWidth: 0
                 );
             }
+            LastSortedPeaksPlotContainedNewPeaks = newPeaks.Count() > 0;
 
             // Plot weighted peaks
             var weightedPeaks = rankedPeaks
@@ -231,10 +319,8 @@ namespace bmviewer
                     outlineWidth: 0
                 );
             }
-            sortedPeaksPlot.AxisAuto(xExpandOnly: true, yExpandOnly: true);
-            sortedPeaksPlot.Axis(x1: -0.5, x2: 30.5, y1: 0, y2: aimStrainPeaks.Max());
-            sortedPeaksPlot.Ticks(displayTicksXminor: false);
-            sortedPeaksPlot.Grid(xSpacing: 1);
+            //sortedPeaksPlot.AxisAuto(xExpandOnly: true, yExpandOnly: true);
+            sortedPeaksPlot.Axis(x1: -0.5, x2: PEAKS_TO_DISPLAY + 0.5, y1: 0, y2: aimStrainPeaks.Max());
         }
     }
 }

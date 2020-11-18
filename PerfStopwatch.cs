@@ -18,10 +18,11 @@ namespace bmviewer
             sw.Start();
         }
 
-        public static void Stop()
+        public static long Stop()
         {
             sw.Stop();
             Console.WriteLine($"{label}: {sw.ElapsedMilliseconds}ms");
+            return sw.ElapsedMilliseconds;
         }
 
     }

@@ -38,6 +38,7 @@ namespace bmviewer
         List<double> denseAimStrainValues;
         List<double> aimStrainPeakTimes;
         List<double> aimStrainPeaks;
+        List<double> aimStrainPerObjectValues;
 
         // Skin elements
 
@@ -50,6 +51,8 @@ namespace bmviewer
             LoadBeatmapFromFile(@"C:\Program Files\osu!\Songs\919187 765 MILLION ALLSTARS - UNION!!\765 MILLION ALLSTARS - UNION!! (Fu3ya_) [We are all MILLION!! 1.48x (255bpm) AR10 OD10].osu");
             plotter.InitAimStrainMeter(aimStrainMeter.plt);
             plotter.InitSortedPeaksPlot(sortedPeaksPlot.plt);
+            aimStrainMeter.Render();
+            sortedPeaksPlot.Render();
             stopwatch.Start();
             gameTimer.Start();
         }
@@ -100,14 +103,18 @@ namespace bmviewer
             aimStrainValues = aim.StrainValues;
             aimStrainPeakTimes = aim.strainPeakTimes;
             aimStrainPeaks = aim.strainPeaks;
+            aimStrainPerObjectValues = aim.StrainPerObjectValues;
             (denseAimStrainTimes, denseAimStrainValues) = plotter.CalculateDenseStrainValues(aim.StrainTimes, aim.StrainValues);
 
             // Plot aim strain
             PerfStopwatch.Start("Aim Strain Graph");
             aimStrainPlot.plt.Clear();
-            plotter.PlotAimStrainPeaks(aimStrainPlot.plt, aimStrainPeakTimes, aimStrainPeaks);
-            plotter.PlotAimStrainGraph(aimStrainPlot.plt, denseAimStrainTimes, denseAimStrainValues);
-            plotter.PlotAimStrainPerObject(aimStrainPlot.plt, aimStrainTimes, aim.StrainPerObjectValues);
+            plotter.InitAimStrainGraph(aimStrainPlot.plt);
+            plotter.PlotFullAimStrainGraph(
+                aimStrainPlot.plt,
+                aimStrainPeakTimes, aimStrainPeaks,
+                denseAimStrainTimes, denseAimStrainValues,
+                aimStrainTimes, aimStrainPerObjectValues);
             aimStrainPlot.Render();
             PerfStopwatch.Stop();
 
@@ -207,34 +214,46 @@ namespace bmviewer
                 return; // prevent recursive calls
             if (time > timeUpDown.Maximum)
                 return;
+            long totalMs = 0;
 
             gameTime = time;
             timeUpDown.Value = gameTime;
             trackBar1.Value = gameTime;
             PerfStopwatch.Start("Game Draw:".PadRight(25));
             skControl.Invalidate();
-            Console.WriteLine("");
-            PerfStopwatch.Stop();
+            totalMs += PerfStopwatch.Stop();
 
             // Update aim strain plot time range
             PerfStopwatch.Start("Aim strain plot update".PadRight(25));
+            aimStrainPlot.plt.Clear();
+            plotter.PlotPartialAimStrainGraph(
+                aimStrainPlot.plt,
+                gameTime - 2000, gameTime,
+                aimStrainPeakTimes, aimStrainPeaks,
+                denseAimStrainTimes, denseAimStrainValues,
+                aimStrainTimes, aimStrainPerObjectValues);
             aimStrainPlot.plt.Axis(x1: gameTime - 2000, x2: gameTime, y1: 0, y2: aimStrainValues.Max() + 50);
             aimStrainPlot.Render();
-            PerfStopwatch.Stop();
+            totalMs += PerfStopwatch.Stop();
 
             // Update aim strain meter
             PerfStopwatch.Start("Aim strain meter update".PadRight(25));
             aimStrainMeter.plt.Clear();
             plotter.UpdateAimStrainMeter(aimStrainMeter.plt, denseAimStrainTimes, denseAimStrainValues, aimStrainPeakTimes, aimStrainPeaks, gameTime);
             aimStrainMeter.Render();
-            PerfStopwatch.Stop();
+            totalMs += PerfStopwatch.Stop();
 
             // Update sorted peaks graph
             PerfStopwatch.Start("Sorted peaks plot update".PadRight(25));
-            sortedPeaksPlot.plt.Clear();
-            plotter.PlotSortedPeaks(sortedPeaksPlot.plt, aimStrainPeakTimes, aimStrainPeaks, gameTime);
-            sortedPeaksPlot.Render();
-            PerfStopwatch.Stop();
+            if (plotter.ShouldRedrawSortedPeaksPlot(aimStrainPeakTimes, aimStrainPeaks, gameTime))
+            {
+                sortedPeaksPlot.plt.Clear();
+                plotter.PlotSortedPeaks(sortedPeaksPlot.plt, aimStrainPeakTimes, aimStrainPeaks, gameTime);
+                sortedPeaksPlot.Render();
+            }
+            totalMs += PerfStopwatch.Stop();
+            Console.WriteLine($"total: {totalMs} ms ({1000 / totalMs} Hz)");
+            Console.WriteLine("");
         }
 
         private void playPauseButton_Click(object sender, EventArgs e)

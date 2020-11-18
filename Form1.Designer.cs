@@ -153,7 +153,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1414, 556);
+            this.ClientSize = new System.Drawing.Size(1337, 534);
             this.Controls.Add(this.sortedPeaksPlot);
             this.Controls.Add(this.trackBar1);
             this.Controls.Add(this.aimStrainMeter);
